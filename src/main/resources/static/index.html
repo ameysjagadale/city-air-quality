@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Checker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #74ebd5, #ACB6E5);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 350px;
+            max-width: 90%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            background-color: #4CAF50;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .result p {
+            margin: 6px 0;
+            font-size: 16px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 20px;
+            }
+            .result p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Air Quality Checker</h2>
+    <input type="text" id="city" placeholder="Enter City Name">
+    <div>
+        <button onclick="prevCity()">Previous</button>
+        <button onclick="getAirQuality()">Check AQI</button>
+        <button onclick="nextCity()">Next</button>
+    </div>
+    <div id="result" class="result"></div>
+</div>
+
+<script>
+    const cities = [];
+    let currentIndex = -1;
+
+    function getAirQuality() {
+        const cityInput = document.getElementById('city');
+        const city = cityInput.value.trim();
+        if (!city) return;
+
+        fetch(`/api/airquality?city=${city}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data || !data.cityName) {
+                    document.getElementById('result').innerHTML = `<p class="error">City not found. Try again!</p>`;
+                    return;
+                }
+
+                // Add to cities array if new
+                if (!cities.includes(city)) {
+                    cities.push(city);
+                    currentIndex = cities.length - 1;
+                }
+
+                document.getElementById('result').innerHTML = `
+                    <p><strong>City:</strong> ${data.cityName}</p>
+                    <p><strong>AQI:</strong> ${data.aqi}</p>
+                    <p><strong>PM2.5:</strong> ${data.pm25}</p>
+                    <p><strong>PM10:</strong> ${data.pm10}</p>
+                    <p><strong>CO:</strong> ${data.co}</p>
+                    <p><strong>NO2:</strong> ${data.no2}</p>
+                    <p><strong>O3:</strong> ${data.o3}</p>
+                    <p><strong>SO2:</strong> ${data.so2}</p>
+                    <p><strong>Temperature:</strong> ${data.temperature}</p>
+                    <p><strong>Humidity:</strong> ${data.humidity}</p>
+                    <p><strong>Wind:</strong> ${data.wind}</p>
+                `;
+                cityInput.value = '';
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = `<p class="error">Sorry, data for this city is currently not available. Please enter another city !</p>`;
+            });
+    }
+
+    function prevCity() {
+        if (cities.length === 0) return;
+        currentIndex = (currentIndex > 0) ? currentIndex - 1 : 0;
+        document.getElementById('city').value = cities[currentIndex];
+        getAirQuality();
+    }
+
+    function nextCity() {
+        if (cities.length === 0) return;
+        currentIndex = (currentIndex < cities.length - 1) ? currentIndex + 1 : cities.length - 1;
+        document.getElementById('city').value = cities[currentIndex];
+        getAirQuality();
+    }
+</script>
+</body>
+</html>
